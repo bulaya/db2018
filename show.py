@@ -5,16 +5,19 @@ from wordcloud import WordCloud, ImageColorGenerator
 import numpy as np
 import matplotlib.pyplot as plt
 import json
+import argparse
 
 
 def movie_init():
     name = 201900001
     json_list = []
-    pd.set_option('display.max_columns', None)
-    for i in range(320):
-        with open("json/%s.json" % name, 'r', encoding='utf-8') as f:
-            json_list.append(json.load(f))
-        name += 1
+    while 1:
+        try:
+            with open("json/%s.json" % name, 'r', encoding='utf-8') as f:
+                json_list.append(json.load(f))
+            name += 1
+        except IOError:
+            break
     return pd.DataFrame(json_list)
 
 
@@ -34,7 +37,7 @@ def rank(movie, name):
         sort = sorted(value, key=lambda x: x['rate'], reverse=True)
         print(key)
         for s in range(3 if len(sort) >= 3 else len(sort)):
-            print(sort[s]['title'], sort[s]['rate'])
+            print(sort[s]['rate'], "  ", sort[s]['title'])
     print("----------END----------")
 
 
@@ -44,11 +47,11 @@ def paint(movie):
         for n in re.findall(r"2018-(..)", movie.iloc[i]['date']):
             num[int(n)-1] += 1
     plt.bar(range(1, 13), num)
-    plt.title('Release Time Distribution Map')
+    plt.title('Time Distribution Map')
     plt.show()
 
 
-def comments(movie):
+def votes(movie):
     for i in range(0, len(movie)):
         votes = int(int(movie.iloc[i]['votes']) / 1000) + 1
         with open('words.txt', 'a', encoding='utf-8') as f:
@@ -78,11 +81,23 @@ def comments(movie):
 
 def main():
     movie = movie_init()
-    rank(movie, 'type')
-    rank(movie, 'area')
-    rank(movie, 'language')
-    paint(movie)
-    comments(movie)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-t", "--type", help="print type rank 3", type=str)
+    parser.add_argument("-a", "--area", help="print area rank 3", type=str)
+    parser.add_argument("-l", "--language", help="print language rank 3", type=str)
+    parser.add_argument("-m", "--map", help="display time distribution map", type=str)
+    parser.add_argument("-v", "--votes", help="display score distribution map", type=str)
+    args = parser.parse_args()
+    if args.type:
+        rank(movie, 'type')
+    if args.area:
+        rank(movie, 'area')
+    if args.language:
+        rank(movie, 'language')
+    if args.map:
+        paint(movie)
+    if args.votes:
+        votes(movie)
 
 
 if __name__ == '__main__':

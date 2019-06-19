@@ -2,6 +2,7 @@ import json
 import time
 import requests
 from bs4 import BeautifulSoup
+import argparse
 
 
 class Crawler:
@@ -41,10 +42,17 @@ class Crawler:
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-s", "--start", help="start from here, must be a multiple of 20", type=int, default=0)
+    parser.add_argument("-y", "--year", help="get the movie of that year", type=str, default="2018")
+    args = parser.parse_args()
     # 开始页数
-    start = 0
+    start = args.start
+    if start%20 != 0:
+        print("'start' must is a multiple of 20")
+        return
     # 年份
-    year = "2018"
+    year = args.year
     crawler = Crawler(start)
     while 1:
         url = 'https://movie.douban.com/j/new_search_subjects?sort=U&range=0,10&tags=%E7%94%B5%E5%BD%B1&start=' + str(start) + '&year_range=' + year + ',' + year
