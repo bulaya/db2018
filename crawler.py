@@ -9,16 +9,22 @@ class Crawler:
     def __init__(self, start):
         self.name = 201900001 + start
         self.json_list = []
+        self.false_list = "制片国家/地区: none\n类型: none\n上映日期: none\n语言: none\n片长: none"
 
     def get_one_page(self, url):
-        response = requests.get(url, 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36')
+        s = requests.session()
+        s.headers = 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36'
+        s.keep_alive = False
+        response = s.get(url)
         if response.status_code != 200:
             return 0
         movie_list = response.json()
         for movie in movie_list['data']:
-            res = requests.get(movie['url'])
+            s.keep_alive = False
+            res = s.get(movie['url'])
             soup = BeautifulSoup(res.content, 'html.parser')
-            info_list = soup.select('#info')[0].text.strip().split('\n')
+            content = soup.select('#info')
+            info_list = content[0].text.strip().split('\n') if content else self.false_list
             for i in info_list:
                 item = i.split(': ')
                 if item[0] == '制片国家/地区':
@@ -58,8 +64,8 @@ def main():
         url = 'https://movie.douban.com/j/new_search_subjects?sort=U&range=0,10&tags=%E7%94%B5%E5%BD%B1&start=' + str(start) + '&year_range=' + year + ',' + year
         print(start)
         start += 20
-        # 休息30秒
-        time.sleep(30)
+        # 休息60秒
+        time.sleep(60)
         if crawler.get_one_page(url) == 0:
             break
     print('success')

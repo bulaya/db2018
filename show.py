@@ -14,7 +14,8 @@ def movie_init():
     while 1:
         try:
             with open("json/%s.json" % name, 'r', encoding='utf-8') as f:
-                json_list.append(json.load(f))
+                json_dir = json.load(f)
+                json_list.append(json_dir)
             name += 1
         except IOError:
             break
@@ -25,7 +26,12 @@ def rank(movie, name):
     di = {}
     for i in range(0, len(movie)):
         tr = {"title": movie.iloc[i]['title'], "rate": movie.iloc[i]['rate']}
-        li = movie.iloc[i][name].split(' / ')
+        if tr['rate'] == '':
+            continue
+        try:
+            li = movie.iloc[i][name].split(' / ')
+        except AttributeError:
+            continue
         for j in li:
             if j not in di.keys():
                 di[j] = []
@@ -37,33 +43,32 @@ def rank(movie, name):
         sort = sorted(value, key=lambda x: x['rate'], reverse=True)
         print(key)
         for s in range(3 if len(sort) >= 3 else len(sort)):
-            print(sort[s]['rate'], "  ", sort[s]['title'])
+            if sort[s]['rate'] != '':
+                print(sort[s]['rate'], "  ", sort[s]['title'])
     print("----------END----------")
 
 
 def paint(movie):
     num = [0] * 12
     for i in range(0, len(movie)):
-        for n in re.findall(r"2018-(..)", movie.iloc[i]['date']):
-            num[int(n)-1] += 1
+        try:
+            for n in re.findall(r"2018-(..)", movie.iloc[i]['date']):
+                num[int(n) - 1] += 1
+        except TypeError:
+            continue
     plt.bar(range(1, 13), num)
     plt.title('Time Distribution Map')
     plt.show()
 
 
-def votes(movie):
-    for i in range(0, len(movie)):
-        votes = int(int(movie.iloc[i]['votes']) / 1000) + 1
-        with open('words.txt', 'a', encoding='utf-8') as f:
-            for v in range(votes):
-                f.write(movie.iloc[i]['title'] + ' ')
-    txt = open("words.txt", encoding='utf-8').read()
-    ai_mask = np.array(Image.open("img/ai.jpg"))
+def show_image(file_name, width, height, max_font_size, old_image, new_image):
+    txt = open(file_name, encoding='utf-8').read()
+    ai_mask = np.array(Image.open("img/" + old_image))
     wc = WordCloud(background_color='white',
-                   width=2080,
-                   height=1763,
-                   max_words=2000,
-                   max_font_size=70,
+                   width=width,
+                   height=height,
+                   max_words=9000,
+                   max_font_size=max_font_size,
                    collocations=False,
                    mask=ai_mask,
                    font_path="msyh.ttc")
@@ -73,10 +78,55 @@ def votes(movie):
     wc.recolor(color_func=img_colors)
     # 显示词云图
     plt.imshow(wc)
-    wc.to_file('test.png')
+    wc.to_file('img/' + new_image)
     plt.imshow(wc, interpolation='bilinear')
     plt.axis('off')
     plt.show()
+
+
+def votes(movie):
+    with open('text/title.txt', 'a', encoding='utf-8') as f:
+        for i in range(0, len(movie)):
+            votes = int(int(movie.iloc[i]['votes']) / 1000) + 1
+            for v in range(votes):
+                f.write(movie.iloc[i]['title'] + ' ')
+    show_image('text/title.txt', 4096, 2160, 100, 'ai.png', 'title.png')
+
+
+def language(movie):
+    with open('text/language.txt', 'a', encoding='utf-8') as f:
+        for i in range(0, len(movie)):
+            try:
+                language_list = movie.iloc[i]['language'].split(' / ')
+            except AttributeError:
+                continue
+            for l in language_list:
+                f.write(l + ' ')
+    show_image('text/language.txt', 1920, 1080, 3000, 'nahan.jpg', 'language.png')
+
+
+def area(movie):
+    with open('text/area.txt', 'a', encoding='utf-8') as f:
+        for i in range(0, len(movie)):
+            try:
+                area_list = movie.iloc[i]['area'].split(' / ')
+            except AttributeError:
+                continue
+            for l in area_list:
+                f.write(l + ' ')
+    show_image('text/area.txt', 1920, 1080, 2000, 'xk.jpg', 'area.png')
+
+
+def type(movie):
+    with open('text/type.txt', 'a', encoding='utf-8') as f:
+        for i in range(0, len(movie)):
+            try:
+                type_list = movie.iloc[i]['type'].split(' / ')
+            except AttributeError:
+                continue
+            for l in type_list:
+                f.write(l + ' ')
+    show_image('text/type.txt', 1000, 800, 1000, 'light.png', 'type.png')
 
 
 def main():
@@ -86,7 +136,10 @@ def main():
     parser.add_argument("-a", "--area", help="print area rank 3", type=str)
     parser.add_argument("-l", "--language", help="print language rank 3", type=str)
     parser.add_argument("-m", "--map", help="display time distribution map", type=str)
-    parser.add_argument("-v", "--votes", help="display score distribution map", type=str)
+    parser.add_argument("-vm", "--votes_map", help="display score distribution map", type=str)
+    parser.add_argument("-lm", "--language_map", help="display language distribution map", type=str)
+    parser.add_argument("-am", "--area_map", help="display area distribution map", type=str)
+    parser.add_argument("-tm", "--type_map", help="display type distribution map", type=str)
     args = parser.parse_args()
     if args.type:
         rank(movie, 'type')
@@ -96,8 +149,14 @@ def main():
         rank(movie, 'language')
     if args.map:
         paint(movie)
-    if args.votes:
+    if args.votes_map:
         votes(movie)
+    if args.language_map:
+        language(movie)
+    if args.area_map:
+        area(movie)
+    if args.type_map:
+        type(movie)
 
 
 if __name__ == '__main__':
