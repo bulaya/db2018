@@ -74,9 +74,7 @@ def show_image(file_name, width, height, max_font_size, old_image, new_image):
                    font_path="msyh.ttc")
     wc.generate_from_text(txt)
     img_colors = ImageColorGenerator(ai_mask)
-    # 字体颜色为背景图片的颜色
     wc.recolor(color_func=img_colors)
-    # 显示词云图
     plt.imshow(wc)
     wc.to_file('img/' + new_image)
     plt.imshow(wc, interpolation='bilinear')
@@ -132,31 +130,30 @@ def type(movie):
 def main():
     movie = movie_init()
     parser = argparse.ArgumentParser()
-    parser.add_argument("-t", "--type", help="print type rank 3", type=str)
-    parser.add_argument("-a", "--area", help="print area rank 3", type=str)
-    parser.add_argument("-l", "--language", help="print language rank 3", type=str)
-    parser.add_argument("-m", "--map", help="display time distribution map", type=str)
-    parser.add_argument("-vm", "--votes_map", help="display score distribution map", type=str)
-    parser.add_argument("-lm", "--language_map", help="display language distribution map", type=str)
-    parser.add_argument("-am", "--area_map", help="display area distribution map", type=str)
-    parser.add_argument("-tm", "--type_map", help="display type distribution map", type=str)
+    parser.add_argument("-r", "--rank", help="[type] print type rank 3,"
+                                             "[area] print area rank 3,"
+                                             "[language] print language rank 3", type=str)
+    parser.add_argument("-m", "--map", help="[month] display time distribution map,"
+                                            "[votes] display score distribution map,"
+                                            "[language] display language distribution map,"
+                                            "[area] display area distribution map,"
+                                            "[type] display type distribution map", type=str)
     args = parser.parse_args()
-    if args.type:
-        rank(movie, 'type')
-    if args.area:
-        rank(movie, 'area')
-    if args.language:
-        rank(movie, 'language')
+    if args.rank:
+        rank(movie, args.rank)
     if args.map:
-        paint(movie)
-    if args.votes_map:
-        votes(movie)
-    if args.language_map:
-        language(movie)
-    if args.area_map:
-        area(movie)
-    if args.type_map:
-        type(movie)
+        if args.map == 'month':
+            paint(movie)
+        elif args.map == 'votes':
+            votes(movie)
+        elif args.map == 'language':
+            language(movie)
+        elif args.map == 'area':
+            area(movie)
+        elif args.map == 'type':
+            type(movie)
+        else:
+            print('python show.py -h 了解一下')
 
 
 if __name__ == '__main__':
